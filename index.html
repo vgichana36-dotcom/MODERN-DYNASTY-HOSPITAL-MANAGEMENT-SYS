@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modern Dynasty Hospital | Advanced Healthcare Management System</title>
+    <link rel="stylesheet" href="index dashboard.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Open+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+      
+    <style>
+        /* CSS will be added in the next file */
+    </style>
+</head>
+<body>
+    <!-- Toast Notification -->
+    <div class="toast" id="toast">
+        <i class="fas fa-check-circle"></i>
+        <div>
+            <strong id="toast-title">Success</strong>
+            <p id="toast-message">Operation completed successfully.</p>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div class="modal" id="confirmationModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="confirmationTitle">Confirm Action</h3>
+            </div>
+            <div class="modal-body">
+                <p id="confirmationMessage">Are you sure you want to perform this action?</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" id="cancelConfirm">Cancel</button>
+                <button class="btn btn-accent" id="confirmAction">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Modal -->
+    <div class="modal" id="editModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="editModalTitle">Edit Record</h3>
+                <p id="editModalSubtitle">Update the record details</p>
+            </div>
+            <div class="modal-body">
+                <form id="editForm">
+                    <!-- Form content will be dynamically generated -->
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" id="cancelEdit">Cancel</button>
+                <button type="submit" form="editForm" class="btn btn-accent">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- View Details Modal -->
+    <div class="modal" id="viewModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="viewModalTitle">Record Details</h3>
+                <p id="viewModalSubtitle">Complete information</p>
+            </div>
+            <div class="modal-body" id="viewModalBody">
+                <!-- Details will be dynamically loaded -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" id="closeViewModal">Close</button>
+                <button class="btn btn-accent" id="editFromView">Edit</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Billing Payment Modal -->
+    <div class="modal" id="paymentModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="paymentModalTitle">Make Payment</h3>
+                <p id="paymentModalSubtitle">Complete your bill payment</p>
+            </div>
+            <div class="modal-body">
+                <div id="paymentContent">
+                    <!-- Payment content will be loaded here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" id="cancelPayment">Cancel</button>
+                <button class="btn btn-accent" id="processPayment" style="display: none;">Process Payment</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Receipt Modal -->
+    <div class="modal" id="receiptModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-receipt"></i> Payment Receipt</h3>
+            </div>
+            <div class="modal-body" id="receiptContent">
+                <!-- Receipt will be loaded here -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" id="closeReceipt">Close</button>
+                <button class="btn btn-accent" id="printReceipt"><i class="fas fa-print"></i> Print Receipt</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions Modal -->
+    <div class="modal" id="quickActionModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="quickActionTitle">Quick Action</h3>
+            </div>
+            <div class="modal-body" id="quickActionContent">
+                <!-- Content will be loaded here -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" id="cancelQuickAction">Cancel</button>
+                <button class="btn btn-accent" id="executeQuickAction">Execute</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Auth Modal -->
+    <div class="auth-modal" id="authModal">
+        <div class="auth-container">
+            <button class="close-modal" id="closeAuthModal">&times;</button>
+            <div class="auth-header">
+                <h2 id="authModalTitle">Login to Modern Dynasty</h2>
+                <p id="authModalSubtitle">Access your hospital management dashboard</p>
+            </div>
+            <div class="auth-body">
+                <div class="auth-tabs">
+                    <button class="auth-tab active" id="loginTab">Login</button>
+                    <button class="auth-tab" id="registerTab">Register</button>
+                </div>
+                
+                <form class="auth-form" id="loginForm" style="display: block;">
+                    <div class="form-group">
+                        <label for="loginEmail"><i class="fas fa-envelope"></i> Email Address</label>
+                        <input type="email" id="loginEmail" placeholder="Enter your email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="loginPassword"><i class="fas fa-lock"></i> Password</label>
+                        <input type="password" id="loginPassword" placeholder="Enter your password" required>
+                    </div>
+                    <button type="submit" class="btn btn-accent">Login to Dashboard</button>
+                </form>
+                
+                <form class="auth-form" id="registerForm" style="display: none;">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="firstName"><i class="fas fa-user"></i> First Name</label>
+                            <input type="text" id="firstName" placeholder="John" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="lastName"><i class="fas fa-user"></i> Last Name</label>
+                            <input type="text" id="lastName" placeholder="Doe" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="registerEmail"><i class="fas fa-envelope"></i> Email Address</label>
+                        <input type="email" id="registerEmail" placeholder="john.doe@hospital.com" required>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="registerPassword"><i class="fas fa-lock"></i> Password</label>
+                            <input type="password" id="registerPassword" placeholder="Create password" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="confirmPassword"><i class="fas fa-lock"></i> Confirm Password</label>
+                            <input type="password" id="confirmPassword" placeholder="Confirm password" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="userRole"><i class="fas fa-user-md"></i> Select Role</label>
+                        <select id="userRole" required>
+                            <option value="">Select your role</option>
+                            <option value="patient">Patient</option>
+                            <option value="doctor">Doctor/Physician</option>
+                            <option value="nurse">Nurse</option>
+                            <option value="staff">Hospital Staff</option>
+                        </select>
+                    </div>
+                    
+                    <div class="role-info-box info" id="roleInfoPatient" style="display: none;">
+                        <i class="fas fa-info-circle"></i> <strong>Patient Registration:</strong> You will get immediate access to the patient portal upon registration.
+                    </div>
+                    <div class="role-info-box warning" id="roleInfoProfessional" style="display: none;">
+                        <i class="fas fa-clock"></i> <strong>Professional Registration:</strong> Your account requires administrator approval before access is granted.
+                    </div>
+                    
+                    <button type="submit" class="btn btn-secondary">Create Account</button>
+                    
+                    <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--light-gray); text-align: center;">
+    <p style="color: var(--gray); font-size: 0.9rem;">
+        <i class="fas fa-info-circle"></i> 
+    </p>
+</div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header id="header">
+        <div class="container">
+            <nav class="navbar">
+                <a href="#" class="logo">
+                    <i class="fas fa-hospital-alt"></i> 
+                    <span class="logo-text">Modern Dynasty</span>
+                </a>
+                
+                <ul class="nav-links">
+                    <li><a href="#features">Features</a></li>
+                    <li><a href="#calculators">Health Tools</a></li>
+                    <li><a href="#dashboard" class="dashboard-nav" style="display: none;">Dashboard</a></li>
+                    <li><a href="#testimonials">Testimonials</a></li>
+                    <li>
+    <div class="user-info" id="userInfo" style="display: none;">
+        <div class="user-avatar" id="userAvatar"></div>
+        <div class="user-details-mobile">
+            <span id="userName"></span>
+            <span class="role-badge" id="userRoleBadge"></span>
+        </div>
+    </div>
+</li>
+                    <li><a href="#" class="btn btn-outline" id="authBtn">Login / Register</a></li>
+                    <li><a href="#" class="btn btn-accent" id="logoutBtn" style="display: none;">Logout</a></li>
+                </ul>
+                
+                <button class="mobile-toggle" id="mobileToggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero" id="hero">
+        <div class="hero-bg"></div>
+        <div class="container">
+            <div class="hero-content">
+                <h1>Revolutionize Healthcare Management</h1>
+                <p>Modern Dynasty Hospital Management System integrates all aspects of your healthcare facility into one intelligent, secure, and user-friendly platform. Enhance patient care, streamline operations, and drive growth.</p>
+                <div class="hero-btns">
+                    <a href="#dashboard" class="btn btn-accent get-started-btn">Get Started <i class="fas fa-rocket"></i></a>
+                    <a href="#calculators" class="btn btn-outline">Health Calculators <i class="fas fa-calculator"></i></a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats Section -->
+    <section class="stats" id="stats">
+        <div class="container">
+            <div class="stats-container">
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="fas fa-hospital-user"></i></div>
+                    <div class="stat-number" data-count="250">0</div>
+                    <div class="stat-text">Hospitals Trust Us</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="fas fa-user-md"></i></div>
+                    <div class="stat-number" data-count="15000">0</div>
+                    <div class="stat-text">Healthcare Professionals</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="fas fa-procedures"></i></div>
+                    <div class="stat-number" data-count="2.5">0</div>
+                    <div class="stat-text">Million Patients Managed</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="fas fa-chart-line"></i></div>
+                    <div class="stat-number" data-count="98">0</div>
+                    <div class="stat-text">Satisfaction Rate</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="features">
+        <div class="container">
+            <div class="section-title">
+                <h2>Comprehensive Features</h2>
+                <p>Everything you need to manage a modern healthcare facility efficiently</p>
+            </div>
+            
+            <div class="feature-tabs">
+                <button class="tab-btn active" data-tab="tab1">Patient Management</button>
+                <button class="tab-btn" data-tab="tab2">Clinical Operations</button>
+                <button class="tab-btn" data-tab="tab3">Administrative</button>
+                <button class="tab-btn" data-tab="tab4">Financial</button>
+            </div>
+            
+            <div class="feature-content active" id="tab1">
+                <div class="feature-card">
+                    <div class="feature-icon"><i class="fas fa-user-injured"></i></div>
+                    <h3>Patient Portal</h3>
+                    <p>Secure online portal for patients to access records, schedule appointments, and communicate with providers.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon"><i class="fas fa-calendar-alt"></i></div>
+                    <h3>Smart Scheduling</h3>
+                    <p>AI-powered scheduling optimizes appointments, reduces wait times, and maximizes resource utilization.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon"><i class="fas fa-file-medical-alt"></i></div>
+                    <h3>EHR Integration</h3>
+                    <p>Seamless integration with leading Electronic Health Record systems for comprehensive patient history.</p>
+                </div>
+            </div>
+            
+            <div class="feature-content" id="tab2">
+                <div class="feature-card">
+                    <div class="feature-icon"><i class="fas fa-prescription-bottle-alt"></i></div>
+                    <h3>Pharmacy Management</h3>
+                    <p>Complete control over medication dispensing, inventory, and prescription tracking.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon"><i class="fas fa-diagnoses"></i></div>
+                    <h3>Diagnostic Integration</h3>
+                    <p>Connect with lab and imaging systems for instant results and comprehensive diagnostic views.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon"><i class="fas fa-clipboard-check"></i></div>
+                    <h3>Clinical Decision Support</h3>
+                    <p>AI-powered insights and alerts to support clinical decisions and improve patient outcomes.</p>
+                </div>
+            </div>
+            
+            <div class="feature-content" id="tab3">
+                <div class="feature-card">
+                    <div class="feature-icon"><i class="fas fa-users-cog"></i></div>
+                    <h3>Staff Management</h3>
+                    <p>Comprehensive tools for scheduling, credential tracking, and performance management.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon"><i class="fas fa-warehouse"></i></div>
+                    <h3>Inventory Control</h3>
+                    <p>Real-time tracking of medical supplies, equipment, and pharmaceuticals with automated reordering.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon"><i class="fas fa-tasks"></i></div>
+                    <h3>Compliance Tracking</h3>
+                    <p>Automated monitoring of regulatory requirements and accreditation standards.</p>
+                </div>
+            </div>
+            
+            <div class="feature-content" id="tab4">
+                <div class="feature-card">
+                    <div class="feature-icon"><i class="fas fa-file-invoice-dollar"></i></div>
+                    <h3>Billing & Claims</h3>
+                    <p>Automated billing, insurance claims processing, and real-time eligibility verification.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon"><i class="fas fa-chart-pie"></i></div>
+                    <h3>Financial Analytics</h3>
+                    <p>Comprehensive financial reporting, revenue cycle management, and predictive analytics.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon"><i class="fas fa-hand-holding-usd"></i></div>
+                    <h3>Payment Processing</h3>
+                    <p>Secure, integrated payment processing with support for multiple payment methods.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Calculators Section -->
+    <section id="calculators" class="calculators">
+        <div class="container">
+            <div class="section-title">
+                <h2>Advanced Health Calculators</h2>
+                <p>Professional medical calculators for healthcare professionals and patients</p>
+            </div>
+            
+            <div class="calculator-grid">
+                <div class="calculator-card">
+                    <div class="calculator-header">
+                        <div class="calculator-icon">
+                            <i class="fas fa-weight"></i>
+                        </div>
+                        <div class="calculator-title">
+                            <h3>BMI Calculator</h3>
+                            <p>Body Mass Index Assessment</p>
+                        </div>
+                    </div>
+                    
+                    <div class="calculator-form">
+                        <div class="form-group">
+                            <label for="height"><i class="fas fa-ruler-vertical"></i> Height (cm)</label>
+                            <input type="number" id="height" min="50" max="250" step="0.1" placeholder="Enter height in cm">
+                        </div>
+                        <div class="form-group">
+                            <label for="weight"><i class="fas fa-weight"></i> Weight (kg)</label>
+                            <input type="number" id="weight" min="10" max="300" step="0.1" placeholder="Enter weight in kg">
+                        </div>
+                        <button class="btn btn-secondary" id="calculateBMI">Calculate BMI</button>
+                    </div>
+                    
+                    <div class="calculator-result" id="bmi-result">
+                        <h4><i class="fas fa-chart-line"></i> BMI Result</h4>
+                        <div class="result-value" id="bmi-value">-</div>
+                        <div class="result-category" id="bmi-category">-</div>
+                        <p id="bmi-interpretation" style="margin-top: 15px; font-size: 0.9rem;"></p>
+                    </div>
+                </div>
+                
+                <div class="calculator-card">
+                    <div class="calculator-header">
+                        <div class="calculator-icon">
+                            <i class="fas fa-heartbeat"></i>
+                        </div>
+                        <div class="calculator-title">
+                            <h3>Blood Pressure</h3>
+                            <p>Hypertension Assessment</p>
+                        </div>
+                    </div>
+                    
+                    <div class="calculator-form">
+                        <div class="form-group">
+                            <label for="systolic"><i class="fas fa-tachometer-alt"></i> Systolic (mmHg)</label>
+                            <input type="number" id="systolic" min="50" max="250" placeholder="Top number">
+                        </div>
+                        <div class="form-group">
+                            <label for="diastolic"><i class="fas fa-tachometer-alt"></i> Diastolic (mmHg)</label>
+                            <input type="number" id="diastolic" min="30" max="200" placeholder="Bottom number">
+                        </div>
+                        <button class="btn btn-secondary" id="calculateBP">Assess Blood Pressure</button>
+                    </div>
+                    
+                    <div class="calculator-result" id="bp-result">
+                        <h4><i class="fas fa-heartbeat"></i> Blood Pressure Result</h4>
+                        <div class="result-value" id="bp-value">-</div>
+                        <div class="result-category" id="bp-category">-</div>
+                        <p id="bp-recommendation" style="margin-top: 15px; font-size: 0.9rem;"></p>
+                    </div>
+                </div>
+                
+                <div class="calculator-card">
+                    <div class="calculator-header">
+                        <div class="calculator-icon">
+                            <i class="fas fa-fire"></i>
+                        </div>
+                        <div class="calculator-title">
+                            <h3>Calorie Calculator</h3>
+                            <p>Daily Calorie Needs</p>
+                        </div>
+                    </div>
+                    
+                    <div class="calculator-form">
+                        <div class="form-group">
+                            <label for="cal-age"><i class="fas fa-user"></i> Age</label>
+                            <input type="number" id="cal-age" min="1" max="120" placeholder="Enter age">
+                        </div>
+                        <div class="form-group">
+                            <label for="cal-gender"><i class="fas fa-venus-mars"></i> Gender</label>
+                            <select id="cal-gender">
+                                <option value="">Select Gender</option>
+                                <option value="male">Male</option>
+                                <option value="female">Female</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="cal-weight"><i class="fas fa-weight"></i> Weight (kg)</label>
+                            <input type="number" id="cal-weight" min="10" max="300" step="0.1" placeholder="Enter weight">
+                        </div>
+                        <div class="form-group">
+                            <label for="cal-height"><i class="fas fa-ruler-vertical"></i> Height (cm)</label>
+                            <input type="number" id="cal-height" min="50" max="250" step="0.1" placeholder="Enter height">
+                        </div>
+                        <div class="form-group">
+                            <label for="cal-activity"><i class="fas fa-running"></i> Activity Level</label>
+                            <select id="cal-activity">
+                                <option value="1.2">Sedentary (little or no exercise)</option>
+                                <option value="1.375">Lightly active (light exercise 1-3 days/week)</option>
+                                <option value="1.55">Moderately active (moderate exercise 3-5 days/week)</option>
+                                <option value="1.725">Very active (hard exercise 6-7 days/week)</option>
+                                <option value="1.9">Extra active (very hard exercise & physical job)</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-secondary" id="calculateCalories">Calculate Calories</button>
+                    </div>
+                    
+                    <div class="calculator-result" id="cal-result">
+                        <h4><i class="fas fa-fire"></i> Daily Calorie Needs</h4>
+                        <div class="result-value" id="cal-value">-</div>
+                        <p id="cal-description" style="margin-top: 15px; font-size: 0.9rem;"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Dashboard Section -->
+    <section id="dashboard" class="dashboard">
+        <div class="container">
+            <div class="dashboard-header">
+                <div class="section-title">
+                    <h2 id="dashboardTitle">Hospital Management Dashboard</h2>
+                    <p id="dashboardSubtitle">Welcome to your personalized dashboard</p>
+                </div>
+                <div class="user-welcome" id="userWelcome">
+                    <h3>Welcome, <span id="welcomeUserName">User</span></h3>
+                    <p>Role: <strong id="welcomeUserRole">Administrator</strong></p>
+                </div>
+            </div>
+            
+            <div id="pendingApprovalScreen" style="display: none;">
+                <div class="pending-approval-screen">
+                    <div class="pending-icon">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <h2>Awaiting Administrator Approval</h2>
+                    <p>Your account registration is complete, but requires administrator approval before you can access the dashboard.</p>
+                    <p>You will receive an email notification when your account has been approved.</p>
+                    <div class="role-info-box info" style="margin-top: 30px; max-width: 400px; margin-left: auto; margin-right: auto;">
+                        <i class="fas fa-envelope"></i> If you have any questions, please contact the hospital administration.
+                    </div>
+                </div>
+            </div>
+            
+            <div id="regularDashboard" style="display: none;">
+                <div class="dashboard-tabs" id="dashboardTabs">
+                    <!-- Tabs will be dynamically populated -->
+                </div>
+                
+                <div class="quick-actions-bar" id="quickActionsBar" style="display: none; margin-bottom: 20px; padding: 15px; background: white; border-radius: var(--radius); box-shadow: var(--shadow);">
+                    <div class="quick-actions-title">
+                        <i class="fas fa-bolt"></i> Quick Actions
+                    </div>
+                    <div class="quick-actions-buttons" id="quickActionsButtons">
+                        <!-- Quick action buttons will be loaded here -->
+                    </div>
+                </div>
+                
+                <div id="dashboardContent">
+                    <!-- Content will be dynamically populated -->
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonials -->
+    <section id="testimonials" class="testimonials">
+        <div class="container">
+            <div class="section-title">
+                <h2>Trusted by Healthcare Leaders</h2>
+                <p>See what hospital administrators and healthcare professionals are saying</p>
+            </div>
+            
+            <div class="testimonial-slider">
+                <div class="testimonial-track">
+                    <div class="testimonial-slide">
+                        <div class="testimonial-content">
+                            "Modern Dynasty transformed our hospital's efficiency. Patient wait times decreased by 40% and administrative costs dropped significantly. The system is intuitive and the support team is exceptional."
+                        </div>
+                        <div class="testimonial-author">
+                            <div class="author-avatar">DR</div>
+                            <div class="author-info">
+                                <h4>Dr. Sarah Johnson</h4>
+                                <p>Chief Medical Officer, Metropolitan General</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="testimonial-slide">
+                        <div class="testimonial-content">
+                            "Implementation was seamless and the ROI was evident within months. The analytics dashboard alone has improved our decision-making process. Modern Dynasty is truly a game-changer for healthcare management."
+                        </div>
+                        <div class="testimonial-author">
+                            <div class="author-avatar">MR</div>
+                            <div class="author-info">
+                                <h4>Michael Roberts</h4>
+                                <p>Hospital Administrator, Unity Health System</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="testimonial-slide">
+                        <div class="testimonial-content">
+                            "As a mid-sized hospital, we needed a comprehensive yet affordable solution. Modern Dynasty delivered beyond expectations. The patient management features have significantly improved our care quality metrics."
+                        </div>
+                        <div class="testimonial-author">
+                            <div class="author-avatar">AL</div>
+                            <div class="author-info">
+                                <h4>Amanda Lee</h4>
+                                <p>Director of Operations, Community Medical Center</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="slider-controls">
+                <button class="slider-btn prev-btn"><i class="fas fa-chevron-left"></i></button>
+                <button class="slider-btn next-btn"><i class="fas fa-chevron-right"></i></button>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta">
+        <div class="container">
+            <div class="cta-content">
+                <h2>Ready to Transform Your Hospital?</h2>
+                <p>Join over 250 healthcare facilities already using Modern Dynasty to improve efficiency, enhance patient care, and drive growth. Get started today.</p>
+                <div class="hero-btns">
+                    <a href="#" class="btn btn-accent get-started-cta">Get Started Now <i class="fas fa-rocket"></i></a>
+                    <a href="#features" class="btn btn-light">Explore Features <i class="fas fa-search"></i></a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer id="contact">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-about">
+                    <div class="footer-logo">
+                        <i class="fas fa-hospital-alt"></i> Modern Dynasty
+                    </div>
+                    <p>Revolutionizing healthcare management through innovative technology solutions designed for modern hospitals and medical facilities.</p>
+                    <div class="social-links">
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                        <a href="#"><i class="fab fa-linkedin-in"></i></a>
+                        <a href="#"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                    </div>
+                </div>
+                
+                <div class="footer-links">
+                    <h4>Quick Links</h4>
+                    <ul>
+                        <li><a href="#features"><i class="fas fa-chevron-right"></i> Features</a></li>
+                        <li><a href="#calculators"><i class="fas fa-chevron-right"></i> Health Calculators</a></li>
+                        <li><a href="#testimonials"><i class="fas fa-chevron-right"></i> Testimonials</a></li>
+                        <li><a href="#contact"><i class="fas fa-chevron-right"></i> Contact</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-contact">
+                    <h4>Contact Us</h4>
+                    <p><i class="fas fa-map-marker-alt"></i> 123 Healthcare Avenue, Medical District, Nairobi</p>
+                    <p><i class="fas fa-phone"></i> (020) 123-HEALTH (4325)</p>
+                    <p><i class="fas fa-envelope"></i> info@moderndynasty.com</p>
+                    <p><i class="fas fa-clock"></i> Mon-Fri: 8am-8pm EAT | Sat: 9am-5pm EAT</p>
+                </div>
+            </div>
+            
+            <div class="copyright">
+                <p>&copy; 2024 Modern Dynasty Hospital Management System. All rights reserved.</p>
+                <p style="margin-top: 10px; font-size: 0.8rem;">Note: Health calculators are for informational purposes only. Consult healthcare professionals for medical advice.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // JavaScript code will be in the next file
+    </script>
+    <script src="indexdashboard.js"></script>
+</body>
+</html>
